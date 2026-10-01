@@ -28,13 +28,10 @@ interface ReconcileEmployeeAccessOutput {
   revoked: number;
 }
 
-export class ReconcileEmployeeAccess
-  implements
-    UseCase<
-      ReconcileEmployeeAccessInput,
-      ReconcileEmployeeAccessOutput
-    >
-{
+export class ReconcileEmployeeAccess implements UseCase<
+  ReconcileEmployeeAccessInput,
+  ReconcileEmployeeAccessOutput
+> {
   constructor(
     private readonly policyRepository: AccessPolicyRepository,
     private readonly entitlementRepository: ApplicationEntitlementRepository,
@@ -46,17 +43,11 @@ export class ReconcileEmployeeAccess
   public async execute(
     input: ReconcileEmployeeAccessInput,
   ): Promise<ReconcileEmployeeAccessOutput> {
-    const subject = AccessSubject.create(
-      input.tenantId,
-      input.objectId,
-    );
+    const subject = AccessSubject.create(input.tenantId, input.objectId);
 
-    const profile = EmployeeAccessProfile.create(
-      input.profile,
-    );
+    const profile = EmployeeAccessProfile.create(input.profile);
 
-    const policies =
-      await this.policyRepository.findAllActive();
+    const policies = await this.policyRepository.findAllActive();
 
     const now = this.clock.now();
 
@@ -64,35 +55,28 @@ export class ReconcileEmployeeAccess
     let revoked = 0;
 
     for (const policy of policies) {
-      const matches = this.policyEvaluator.matches(
-        policy,
-        profile,
-      );
+      const matches = this.policyEvaluator.matches(policy, profile);
 
       const existingEntitlement =
         await this.entitlementRepository.findActiveByPolicyAndSubject(
           policy.id,
           subject,
+          now,
         );
 
       if (matches && !existingEntitlement) {
-        const entitlement =
-          ApplicationEntitlement.create(
-            {
-              subject,
-              applicationId: policy.applicationId,
-              source: "policy",
-              grantedAt: now,
-              policyId: policy.id,
-            },
-            EntityId.create(
-              this.idGenerator.generate(),
-            ),
-          );
-
-        await this.entitlementRepository.save(
-          entitlement,
+        const entitlement = ApplicationEntitlement.create(
+          {
+            subject,
+            applicationId: policy.applicationId,
+            source: "policy",
+            grantedAt: now,
+            policyId: policy.id,
+          },
+          EntityId.create(this.idGenerator.generate()),
         );
+
+        await this.entitlementRepository.save(entitlement);
 
         granted++;
 
@@ -106,9 +90,7 @@ export class ReconcileEmployeeAccess
           "Employee no longer matches access policy.",
         );
 
-        await this.entitlementRepository.save(
-          existingEntitlement,
-        );
+        await this.entitlementRepository.save(existingEntitlement);
 
         revoked++;
       }

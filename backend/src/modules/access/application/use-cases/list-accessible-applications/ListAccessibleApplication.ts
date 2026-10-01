@@ -17,16 +17,12 @@ interface AccessibleApplication {
   description?: string;
 }
 
-type ListAccessibleApplicationsOutput =
-  AccessibleApplication[];
+type ListAccessibleApplicationsOutput = AccessibleApplication[];
 
-export class ListAccessibleApplications
-  implements
-    UseCase<
-      ListAccessibleApplicationsInput,
-      ListAccessibleApplicationsOutput
-    >
-{
+export class ListAccessibleApplications implements UseCase<
+  ListAccessibleApplicationsInput,
+  ListAccessibleApplicationsOutput
+> {
   constructor(
     private readonly applicationRepository: ApplicationRepository,
     private readonly entitlementRepository: ApplicationEntitlementRepository,
@@ -36,28 +32,21 @@ export class ListAccessibleApplications
   public async execute(
     input: ListAccessibleApplicationsInput,
   ): Promise<ListAccessibleApplicationsOutput> {
-    const subject = AccessSubject.create(
-      input.tenantId,
-      input.objectId,
-    );
-
-    const entitlements =
-      await this.entitlementRepository.findActiveBySubject(
-        subject,
-      );
+    const subject = AccessSubject.create(input.tenantId, input.objectId);
 
     const now = this.clock.now();
 
+    const entitlements = await this.entitlementRepository.findActiveBySubject(
+      subject,
+      now,
+    );
+
     const applicationIds = [
       ...new Map(
-        entitlements
-          .filter((entitlement) =>
-            entitlement.isActive(now),
-          )
-          .map((entitlement) => [
-            entitlement.applicationId.value,
-            entitlement.applicationId,
-          ]),
+        entitlements.map((entitlement) => [
+          entitlement.applicationId.value,
+          entitlement.applicationId,
+        ]),
       ).values(),
     ];
 
@@ -66,15 +55,10 @@ export class ListAccessibleApplications
     }
 
     const applications =
-      await this.applicationRepository.findByIds(
-        applicationIds,
-      );
+      await this.applicationRepository.findByIds(applicationIds);
 
     return applications
-      .filter(
-        (application) =>
-          application.status === "active",
-      )
+      .filter((application) => application.status === "active")
       .map((application) => ({
         id: application.id.value,
         code: application.code.value,

@@ -89,7 +89,7 @@ export class GrantApplicationAccess implements UseCase<
         applicationId,
         source: input.source,
 
-        grantedAt: this.clock.now(),
+        grantedAt: now,
         expiresAt: input.expiresAt,
 
         grantedBy,

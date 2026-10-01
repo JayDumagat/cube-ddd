@@ -3,6 +3,7 @@ import { DataSource } from "typeorm";
 
 import { ApplicationOrmEntity } from "../../../modules/access/infrastructure/persistence/typeorm/entities/ApplicationOrmEntity";
 import { ApplicationEntitlementOrmEntity } from "../../../modules/access/infrastructure/persistence/typeorm/entities/ApplicationEntitlementOrmEntity";
+import { AccessPolicyOrmEntity } from "../../../modules/access/infrastructure/persistence/typeorm/entities/AccessPolicyOrmEntity";
 
 import { env } from "../config/env";
 
@@ -22,7 +23,8 @@ export const AppDataSource = new DataSource({
 
   entities: [
     ApplicationOrmEntity,
-    ApplicationEntitlementOrmEntity
+    ApplicationEntitlementOrmEntity,
+    AccessPolicyOrmEntity
   ],
 
   migrations: [

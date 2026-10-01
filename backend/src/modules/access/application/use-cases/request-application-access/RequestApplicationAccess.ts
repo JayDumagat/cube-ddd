@@ -113,7 +113,7 @@ export class RequestApplicationAccess
         applicationId,
         requestedBy,
         reason: input.reason,
-        requestedAt: this.clock.now(),
+        requestedAt: now,
         expiresAt: input.expiresAt,
       },
       EntityId.create(

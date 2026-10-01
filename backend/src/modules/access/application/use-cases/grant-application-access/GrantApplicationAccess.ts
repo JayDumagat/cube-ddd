@@ -39,13 +39,10 @@ type GrantApplicationAccessOutput = Result<
   ApplicationAccessAlreadyGrantedError | Error
 >;
 
-export class GrantApplicationAccess
-  implements
-    UseCase<
-      GrantApplicationAccessInput,
-      GrantApplicationAccessOutput
-    >
-{
+export class GrantApplicationAccess implements UseCase<
+  GrantApplicationAccessInput,
+  GrantApplicationAccessOutput
+> {
   constructor(
     private readonly applicationRepository: ApplicationRepository,
     private readonly entitlementRepository: ApplicationEntitlementRepository,
@@ -56,71 +53,53 @@ export class GrantApplicationAccess
   public async execute(
     input: GrantApplicationAccessInput,
   ): Promise<GrantApplicationAccessOutput> {
-    const subject = AccessSubject.create(
-      input.tenantId,
-      input.objectId,
-    );
+    const subject = AccessSubject.create(input.tenantId, input.objectId);
 
-    const applicationId = EntityId.create(
-      input.applicationId,
-    );
+    const applicationId = EntityId.create(input.applicationId);
 
     const application =
-      await this.applicationRepository.findById(
-        applicationId,
-      );
+      await this.applicationRepository.findById(applicationId);
 
     if (!application) {
-      return Result.failure(
-        new Error("Application not found."),
-      );
+      return Result.failure(new Error("Application not found."));
     }
 
-    const alreadyGranted =
-      await this.entitlementRepository.existsActive(
-        subject,
-        applicationId,
-      );
+    const now = this.clock.now();
+    const alreadyGranted = await this.entitlementRepository.existsActive(
+      subject,
+      applicationId,
+      now,
+    );
 
     if (alreadyGranted) {
-      return Result.failure(
-        new ApplicationAccessAlreadyGrantedError(),
-      );
+      return Result.failure(new ApplicationAccessAlreadyGrantedError());
     }
 
     const grantedBy = input.grantedBy
-      ? AccessSubject.create(
-          input.grantedBy.tenantId,
-          input.grantedBy.objectId,
-        )
+      ? AccessSubject.create(input.grantedBy.tenantId, input.grantedBy.objectId)
       : undefined;
 
     const policyId = input.policyId
       ? EntityId.create(input.policyId)
       : undefined;
 
-    const entitlement =
-      ApplicationEntitlement.create(
-        {
-          subject,
-          applicationId,
-          source: input.source,
+    const entitlement = ApplicationEntitlement.create(
+      {
+        subject,
+        applicationId,
+        source: input.source,
 
-          grantedAt: this.clock.now(),
-          expiresAt: input.expiresAt,
+        grantedAt: this.clock.now(),
+        expiresAt: input.expiresAt,
 
-          grantedBy,
-          reason: input.reason,
-          policyId,
-        },
-        EntityId.create(
-          this.idGenerator.generate(),
-        ),
-      );
-
-    await this.entitlementRepository.save(
-      entitlement,
+        grantedBy,
+        reason: input.reason,
+        policyId,
+      },
+      EntityId.create(this.idGenerator.generate()),
     );
+
+    await this.entitlementRepository.save(entitlement);
 
     return Result.success(entitlement);
   }

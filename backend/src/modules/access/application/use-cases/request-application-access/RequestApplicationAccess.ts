@@ -60,6 +60,8 @@ export class RequestApplicationAccess
       input.objectId,
     );
 
+    const now = this.clock.now();
+
     const requestedBy = AccessSubject.create(
       input.requestedBy.tenantId,
       input.requestedBy.objectId,
@@ -84,6 +86,7 @@ export class RequestApplicationAccess
       await this.entitlementRepository.existsActive(
         subject,
         applicationId,
+        now
       );
 
     if (alreadyHasAccess) {

@@ -1,3 +1,5 @@
+import type { PaginatedResult } from "../../../../shared/application/pagination/PaginatedResult";
+import type { PaginationParams } from "../../../../shared/application/pagination/PaginationParams";
 import type { Repository } from "../../../../shared/domain/repositories/Repository";
 import type { EntityId } from "../../../../shared/domain/value-objects/EntityId";
 
@@ -12,21 +14,30 @@ export interface ApplicationEntitlementRepository
   ): Promise<ApplicationEntitlement | null>;
 
   findActiveBySubjectAndApplication(
-    subject: AccessSubject,
-    applicationId: EntityId,
-  ): Promise<ApplicationEntitlement[]>;
+  subject: AccessSubject,
+  applicationId: EntityId,
+  at: Date,
+): Promise<ApplicationEntitlement[]>;
 
-  findActiveBySubject(
-    subject: AccessSubject,
-  ): Promise<ApplicationEntitlement[]>;
+findActiveBySubject(
+  subject: AccessSubject,
+  at: Date,
+): Promise<ApplicationEntitlement[]>;
 
-  findActiveByPolicyAndSubject(
-    policyId: EntityId,
-    subject: AccessSubject,
-  ): Promise<ApplicationEntitlement | null>;
+findActiveByPolicyAndSubject(
+  policyId: EntityId,
+  subject: AccessSubject,
+  at: Date,
+): Promise<ApplicationEntitlement | null>;
 
-  existsActive(
+existsActive(
+  subject: AccessSubject,
+  applicationId: EntityId,
+  at: Date,
+): Promise<boolean>;
+
+  findBySubject(
     subject: AccessSubject,
-    applicationId: EntityId,
-  ): Promise<boolean>;
+    pagination: PaginationParams,
+  ): Promise<PaginatedResult<ApplicationEntitlement>>;
 }

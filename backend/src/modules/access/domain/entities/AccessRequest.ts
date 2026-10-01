@@ -24,13 +24,14 @@ interface AccessRequestProps {
   reviewedBy?: AccessSubject;
   reviewedAt?: Date;
   reviewReason?: string;
+
+  cancelledBy?: AccessSubject;
+  cancelledAt?: Date;
+  cancelReason?: string;
 }
 
 export class AccessRequest extends AggregateRoot<AccessRequestProps> {
-  private constructor(
-    props: AccessRequestProps,
-    id: EntityId,
-  ) {
+  private constructor(props: AccessRequestProps, id: EntityId) {
     super(props, id);
   }
 
@@ -50,9 +51,7 @@ export class AccessRequest extends AggregateRoot<AccessRequestProps> {
     const reason = props.reason.trim();
 
     if (!reason) {
-      throw new Error(
-        "Access request reason cannot be empty.",
-      );
+      throw new Error("Access request reason cannot be empty.");
     }
 
     return new AccessRequest(
@@ -112,10 +111,19 @@ export class AccessRequest extends AggregateRoot<AccessRequestProps> {
     return this.props.reviewReason;
   }
 
-  public approve(
-    reviewedBy: AccessSubject,
-    reviewedAt: Date,
-  ): void {
+  public get cancelledBy(): AccessSubject | undefined {
+    return this.props.cancelledBy;
+  }
+
+  public get cancelledAt(): Date | undefined {
+    return this.props.cancelledAt;
+  }
+
+  public get cancelReason(): string | undefined {
+    return this.props.cancelReason;
+  }
+
+  public approve(reviewedBy: AccessSubject, reviewedAt: Date): void {
     if (this.props.status !== "pending") {
       return;
     }
@@ -137,15 +145,21 @@ export class AccessRequest extends AggregateRoot<AccessRequestProps> {
     this.props.status = "rejected";
     this.props.reviewedBy = reviewedBy;
     this.props.reviewedAt = reviewedAt;
-    this.props.reviewReason =
-      reason?.trim() || undefined;
+    this.props.reviewReason = reason?.trim() || undefined;
   }
 
-  public cancel(): void {
+  public cancel(
+    cancelledBy: AccessSubject,
+    cancelledAt: Date,
+    reason?: string,
+  ): void {
     if (this.props.status !== "pending") {
       return;
     }
 
     this.props.status = "cancelled";
+    this.props.cancelledBy = cancelledBy;
+    this.props.cancelledAt = cancelledAt;
+    this.props.cancelReason = reason?.trim() || undefined;
   }
 }

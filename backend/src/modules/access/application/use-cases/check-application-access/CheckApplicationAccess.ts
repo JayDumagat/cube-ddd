@@ -35,17 +35,19 @@ export class CheckApplicationAccess
       input.objectId,
     );
 
+    const now = this.clock.now();
+
     const applicationId = EntityId.create(
       input.applicationId,
     );
+
 
     const entitlements =
       await this.entitlementRepository.findActiveBySubjectAndApplication(
         subject,
         applicationId,
+        now
       );
-
-    const now = this.clock.now();
 
     const allowed = entitlements.some((entitlement) =>
       entitlement.isActive(now),

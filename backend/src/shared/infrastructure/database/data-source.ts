@@ -1,6 +1,9 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 
+import { ApplicationOrmEntity } from "../../../modules/access/infrastructure/persistence/typeorm/entities/ApplicationOrmEntity";
+import { ApplicationEntitlementOrmEntity } from "../../../modules/access/infrastructure/persistence/typeorm/entities/ApplicationEntitlementOrmEntity";
+
 import { env } from "../config/env";
 
 export const AppDataSource = new DataSource({
@@ -13,9 +16,14 @@ export const AppDataSource = new DataSource({
   database: env.database.name,
 
   synchronize: false,
-  logging: env.nodeEnv === "development",
 
-  entities: [],
+  logging:
+    env.nodeEnv === "development",
+
+  entities: [
+    ApplicationOrmEntity,
+    ApplicationEntitlementOrmEntity
+  ],
 
   migrations: [
     "src/shared/infrastructure/database/migrations/*{.ts,.js}",
